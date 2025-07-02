@@ -133,6 +133,11 @@ Release里的编译好的内核成品由`android15-lineage22-mod`分支编译，
     ```
     bash build.sh TARGET_DEVICE ksu
     ```
+    
+    Build with KernelSU and LXC and Docker:
+    ```
+    bash build.sh TARGET_DEVICE ksu lxc
+    ```
 
     For example, build for lmi (Redmi K30 Pro/POCO F2 Pro) without KernelSU:
     ```

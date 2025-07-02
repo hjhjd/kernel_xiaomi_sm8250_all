@@ -118,7 +118,11 @@ sed -i "s/${local_version_str}/${local_version_date_str}/g" arch/arm64/configs/$
 # ------------- Building for AOSP -------------
 
 echo "Building for AOSP......"
-make $MAKE_ARGS ${TARGET_DEVICE}_defconfig
+if [ "$3" == "lxc" ]; then
+    make $MAKE_ARGS lxc-docker/${TARGET_DEVICE}_defconfig
+else
+    make $MAKE_ARGS ${TARGET_DEVICE}_defconfig
+fi
 
 if [ $KSU_ENABLE -eq 1 ]; then
     scripts/config --file out/.config \
@@ -256,8 +260,11 @@ sed -i 's/\/\/39 01 00 00 00 00 05 51 07 FF 00 00/39 01 00 00 00 00 05 51 07 FF 
 sed -i 's/\/\/39 01 00 00 01 00 03 51 03 FF/39 01 00 00 01 00 03 51 03 FF/g' ${dts_source}/dsi-panel-j11-38-08-0a-fhd-cmd.dtsi
 sed -i 's/\/\/39 01 00 00 11 00 03 51 03 FF/39 01 00 00 11 00 03 51 03 FF/g' ${dts_source}/dsi-panel-j2-p2-1-38-0c-0a-dsc-cmd.dtsi
 
-
-make $MAKE_ARGS ${TARGET_DEVICE}_defconfig
+if [ "$3" == "lxc" ]; then
+    make $MAKE_ARGS lxc-docker/${TARGET_DEVICE}_defconfig
+else
+    make $MAKE_ARGS ${TARGET_DEVICE}_defconfig
+fi
 
 if [ $KSU_ENABLE -eq 1 ]; then
     scripts/config --file out/.config \
