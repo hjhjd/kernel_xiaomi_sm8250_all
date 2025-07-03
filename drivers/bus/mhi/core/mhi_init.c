@@ -401,17 +401,63 @@ static int mhi_alloc_aligned_ring_uncached(
 
 void mhi_deinit_free_irq(struct mhi_controller *mhi_cntrl)
 {
-	int i;
-	struct mhi_event *mhi_event = mhi_cntrl->mhi_event;
+    int i;
+    struct mhi_event *mhi_event;
+    
+    // 1. 基本上下文校验
+    if (unlikely(!mhi_cntrl)) {
+        pr_warn("Invalid mhi_cntrl context\n");
+        return;
+    }
+    
+    // 2. 关键资源有效性检查
+    if (!mhi_cntrl->mhi_event || !mhi_cntrl->irq ||
+        mhi_cntrl->total_ev_rings <= 0) {
+        pr_debug("Skipping IRQ deinit, resources unavailable [event:%p irq:%p rings:%d]\n",
+                 mhi_cntrl->mhi_event, mhi_cntrl->irq, mhi_cntrl->total_ev_rings);
+        goto free_irq0;
+    }
+    
+    mhi_event = mhi_cntrl->mhi_event;
+    
+    // 3. 安全的事件环遍历
+    for (i = 0; i < mhi_cntrl->total_ev_rings; i++, mhi_event++) {
+        // 检查事件元素指针有效性
+        if (unlikely(!mhi_event)) {
+            pr_warn("Invalid mhi_event at index %d\n", i);
+            continue;
+        }
+        
+        // 跳过不需要IRQ的事件
+        if (!mhi_event->request_irq)
+            continue;
+            
+        // 4. 安全的MSI索引检查（不依赖未定义宏）
+        if (unlikely(mhi_event->msi < 0)) {
+            pr_warn("Negative MSI index %d at event %d\n", mhi_event->msi, i);
+            continue;
+        }
+        
+        // 5. 安全释放IRQ（双重验证）
+        if (mhi_event->msi < mhi_cntrl->msi_allocated &&  // 使用实际分配的MSI数量
+            mhi_cntrl->irq[mhi_event->msi] > 0) {        // 验证IRQ号有效性
+            free_irq(mhi_cntrl->irq[mhi_event->msi], mhi_event);
+        } else {
+            pr_debug("Skipping IRQ free for event %d (msi:%d allocated:%d irq:%d)\n",
+                     i, mhi_event->msi, mhi_cntrl->msi_allocated,
+                     (mhi_event->msi < mhi_cntrl->msi_allocated) ? 
+                         mhi_cntrl->irq[mhi_event->msi] : -1);
+        }
+    }
 
-	for (i = 0; i < mhi_cntrl->total_ev_rings; i++, mhi_event++) {
-		if (!mhi_event->request_irq)
-			continue;
-
-		free_irq(mhi_cntrl->irq[mhi_event->msi], mhi_event);
-	}
-
-	free_irq(mhi_cntrl->irq[0], mhi_cntrl);
+free_irq0:
+    // 6. 安全释放主IRQ
+    if (mhi_cntrl->irq && mhi_cntrl->irq[0] > 0) {
+        free_irq(mhi_cntrl->irq[0], mhi_cntrl);
+    } else {
+        pr_debug("Skipping main IRQ deinit [irq:%p index0:%d]\n",
+                 mhi_cntrl->irq, mhi_cntrl->irq ? mhi_cntrl->irq[0] : -1);
+    }
 }
 
 int mhi_init_irq_setup(struct mhi_controller *mhi_cntrl)
