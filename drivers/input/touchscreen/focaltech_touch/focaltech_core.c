@@ -659,7 +659,7 @@ static int fts_input_report_b(struct fts_ts_data *data)
 			input_mt_report_slot_state(data->input_dev,
 						MT_TOOL_FINGER, false);
 			data->touchs &= ~BIT(events[i].id);
-			FTS_DEBUG("[B]P%d TOUCH_UP!", events[i].id);
+			//FTS_DEBUG("[B]P%d TOUCH_UP!", events[i].id);
 		}
 	}
 
@@ -677,7 +677,7 @@ static int fts_input_report_b(struct fts_ts_data *data)
 	if (va_reported) {
 		/* touchs==0, there's no point but key */
 		if (EVENT_NO_DOWN(data) || (!touchs)) {
-			FTS_DEBUG("[B]Points All Up!");
+			//FTS_DEBUG("[B]Points All Up!");
 			input_report_key(data->input_dev, BTN_TOUCH, 0);
 			lpm_disable_for_dev(false, EVENT_INPUT);
 		} else {

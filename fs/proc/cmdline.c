@@ -4,6 +4,7 @@
 #include <linux/proc_fs.h>
 #include <linux/seq_file.h>
 
+
 #ifdef CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG
 extern int susfs_spoof_cmdline_or_bootconfig(struct seq_file *m);
 #endif

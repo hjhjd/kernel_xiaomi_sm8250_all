@@ -257,13 +257,12 @@ static void drop_mountpoint(struct fs_pin *p)
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 static struct mount *alloc_vfsmnt(const char *name, bool should_spoof, int custom_mnt_id)
 #else
-static struct mount *alloc_vfsmnt(const char *name)
+ static struct mount *alloc_vfsmnt(const char *name)
 #endif
 {
 	struct mount *mnt = kmem_cache_zalloc(mnt_cache, GFP_KERNEL);
 	if (mnt) {
 		int err;
-
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 		if (should_spoof) {
 			if (!custom_mnt_id) {
@@ -275,10 +274,11 @@ static struct mount *alloc_vfsmnt(const char *name)
 			goto bypass_orig_flow;
 		}
 #endif
-		err = mnt_alloc_id(mnt);
+ 		err = mnt_alloc_id(mnt);
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 bypass_orig_flow:
 #endif
+
 		if (err)
 			goto out_free_cache;
 
@@ -1051,12 +1051,10 @@ vfs_kern_mount(struct file_system_type *type, int flags, const char *name, void 
 	struct mnt_namespace *mnt_ns;
 	int mnt_id;
 #endif
-
 	struct dentry *root;
 
 	if (!type)
 		return ERR_PTR(-ENODEV);
-
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 	// For newly created mounts, the only caller process we care is KSU
 	if (unlikely(susfs_is_current_ksu_domain())) {
@@ -1066,7 +1064,7 @@ vfs_kern_mount(struct file_system_type *type, int flags, const char *name, void 
 	mnt = alloc_vfsmnt(name, false, 0);
 bypass_orig_flow:
 #else
-	mnt = alloc_vfsmnt(name);
+ 	mnt = alloc_vfsmnt(name);
 #endif
 	if (!mnt)
 		return ERR_PTR(-ENOMEM);
@@ -1996,6 +1994,7 @@ struct mount *copy_tree(struct mount *mnt, struct dentry *dentry,
 	p = mnt;
 	list_for_each_entry(r, &mnt->mnt_mounts, mnt_child) {
 		struct mount *s;
+
 		#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 		int attach_mnt_count = 0;
 		#endif
@@ -3236,7 +3235,6 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
 	// Always let clone_mnt() in copy_tree() know it is from copy_mnt_ns()
 	copy_flags |= CL_COPY_MNT_NS;
 #endif
-
 	new = copy_tree(old, old->mnt.mnt_root, copy_flags);
 	if (IS_ERR(new)) {
 		namespace_unlock();
@@ -3273,6 +3271,7 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
 		while (p->mnt.mnt_root != q->mnt.mnt_root)
 			p = next_mnt(p, old);
 	}
+
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 	// q->mnt.susfs_mnt_id_backup -> original mnt_id
 	// q->mnt_id -> will be modified to the fake mnt_id
